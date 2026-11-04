@@ -11,6 +11,7 @@
 | --- | --- |
 | שלב נוכחי | **שלב 0 — קוד מוכן**; נותר: חיבור Supabase, Google OAuth ו-Vercel (פעולות בחשבונות שלך) |
 | הצעד הבא | ליצור repo ריק ב-GitHub ולדחוף; אחר כך ההקמה לפי ה-README (Supabase → Google → Vercel) |
+| מיקום הקוד | `~/Desktop/Budget Management` במק (מקור האמת); GitHub — עוד לא |
 | חוסמים | אין |
 
 ---
