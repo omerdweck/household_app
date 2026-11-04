@@ -30,4 +30,13 @@ for f in "$ROOT"/supabase/migrations/*.sql; do
   echo "applying $(basename "$f")"
   "${PSQL[@]}" -f "$f"
 done
-"${PSQL[@]}" -f "$ROOT/supabase/tests/core.test.sql" 2>&1 | sed 's/^psql:[^ ]* NOTICE:  /  /'
+# core first (it creates the fixtures the others reuse), then the rest in name order
+TESTS=("$ROOT/supabase/tests/core.test.sql")
+for f in "$ROOT"/supabase/tests/*.test.sql; do
+  [ "$f" = "$ROOT/supabase/tests/core.test.sql" ] || TESTS+=("$f")
+done
+for t in "${TESTS[@]}"; do
+  echo "running $(basename "$t")"
+  "${PSQL[@]}" -f "$t" 2>&1 | sed 's/^psql:[^ ]* NOTICE:  /  /'
+  [ "${PIPESTATUS[0]}" -eq 0 ] || { echo "FAILED: $(basename "$t")"; exit 1; }
+done

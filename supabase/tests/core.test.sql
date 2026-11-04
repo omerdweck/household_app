@@ -2,6 +2,7 @@
 -- Run with: ./scripts/test-db.sh
 \set ON_ERROR_STOP on
 \set QUIET on
+\o /dev/null
 
 -- ---------- fixtures (as superuser, like the Supabase SQL editor) ----------
 insert into public.members (email, display_name) values
