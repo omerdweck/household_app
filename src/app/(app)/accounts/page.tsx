@@ -62,7 +62,12 @@ function AccountList({ accounts, editable = false }: { accounts: Account[]; edit
             <p className="font-semibold">{a.label}</p>
             <p className="text-xs text-muted">
               {PROVIDERS[a.provider].label} · {a.type === "bank" ? "חשבון בנק" : "כרטיס אשראי"}
-              {a.last4 && <span dir="ltr"> · ••••{a.last4}</span>}
+              {a.last4 && (
+                <>
+                  {" · "}
+                  <bdi dir="ltr">••••{a.last4}</bdi>
+                </>
+              )}
               {!a.is_active && " · מושבת"}
             </p>
           </div>
