@@ -14,13 +14,18 @@
 ```
 src/
   app/
-    page.tsx               דף הבית (מוגן, דורש התחברות)
+    (app)/                 כל הדפים שדורשים התחברות, עם ניווט תחתון
+      page.tsx             דף הבית
+      accounts/            "החשבונות שלי": בנקים וכרטיסי אשראי
+      transactions/        הוצאות: רשימה חודשית, הוספה, עריכה וחלוקה
     login/                 התחברות עם Google
     auth/callback/         Google מחזיר לכאן → יצירת session
     auth/signout/          יציאה (POST בלבד)
     not-allowed/           חשבון שלא ברשימת בני הבית
     manifest.ts            PWA manifest
   lib/supabase/            לקוחות Supabase: דפדפן, שרת, middleware
+  lib/money.ts             חישובי חלוקה באגורות שלמות (עם בדיקות)
+  lib/household.ts         המשתמש המחובר ובן/בת הזוג
   middleware.ts            רענון session + הפניה ל-/login
 supabase/
   migrations/              שינויי מסד נתונים, לפי הסדר
@@ -35,7 +40,7 @@ scripts/test-db.sh         מריץ את המיגרציות והבדיקות ע�
 ### 1. Supabase
 
 1. ב-[supabase.com](https://supabase.com) ← New project. אזור: **Central EU (Frankfurt)** (אין אזור בישראל).
-2. SQL Editor ← להריץ לפי הסדר את הקבצים ב-`supabase/migrations/`.
+2. SQL Editor ← להריץ לפי הסדר את הקבצים ב-`supabase/migrations/`. כל מיגרציה חדשה שנוספת ל-repo צריך להריץ שם לפני שדוחפים את הקוד שמשתמש בה.
 3. להוסיף את שני בני הבית (רק מי שכאן יוכל להתחבר):
    ```sql
    insert into public.members (email, display_name) values
@@ -82,7 +87,8 @@ npm run dev                    # http://localhost:3000
 ```bash
 npm run lint
 npm run typecheck
-npm run test:db      # מיגרציות + 11 בדיקות RLS וחלוקה על PostgreSQL מקומי (דורש PostgreSQL 15+)
+npm test             # בדיקות יחידה (חישובי חלוקה, תאריכים)
+npm run test:db      # מיגרציות + בדיקות RLS וחלוקה על PostgreSQL מקומי (דורש PostgreSQL 15+)
 ```
 
 אותן בדיקות רצות ב-GitHub Actions על כל push.
