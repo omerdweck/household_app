@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getHousehold } from "@/lib/household";
 import { allOn, equalSplit, parseAmount, rescaleSplits, splitsMatch, type Split } from "@/lib/money";
+import { normalizeMerchant } from "@/lib/import/normalize";
 import type { Tag, TxKind } from "@/lib/types";
 
 export type FormState = { error?: string };
@@ -69,7 +70,7 @@ export async function createTransaction(_prev: FormState, formData: FormData): P
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("transactions")
-    .insert({ ...f, source: "manual", status: "completed" })
+    .insert({ ...f, merchant_key: normalizeMerchant(f.merchant), source: "manual", status: "completed" })
     .select("id")
     .single();
   if (error || !data) return { error: dbError(error?.message ?? "") };
@@ -102,7 +103,7 @@ export async function updateTransaction(
   const supabase = await createClient();
   const { data: current, error: readErr } = await supabase
     .from("transactions")
-    .select("amount, paid_by, kind, source, transaction_splits(member_id, amount)")
+    .select("amount, paid_by, kind, source, category_id, merchant, merchant_key, transaction_splits(member_id, amount)")
     .eq("id", id)
     .single();
   if (readErr || !current) return { error: "ההוצאה לא נמצאה" };
@@ -141,6 +142,16 @@ export async function updateTransaction(
 
   if (current.source === "manual" && f.account_id !== undefined) {
     await supabase.from("transactions").update({ account_id: f.account_id }).eq("id", id);
+  }
+
+  // Learn: next time this merchant is imported it gets this category automatically,
+  // and other uncategorized rows of the same merchant are filled now.
+  if (f.kind === "expense" && f.category_id && f.category_id !== current.category_id) {
+    await supabase.rpc("learn_category", {
+      p_merchant_key: current.merchant_key ?? normalizeMerchant(current.merchant),
+      p_category_id: f.category_id,
+      p_tag: f.tag,
+    });
   }
 
   revalidatePath("/transactions");

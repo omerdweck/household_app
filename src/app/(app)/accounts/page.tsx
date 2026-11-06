@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getHousehold } from "@/lib/household";
 import { PROVIDERS, type Account } from "@/lib/types";
@@ -72,9 +73,16 @@ function AccountList({ accounts, editable = false }: { accounts: Account[]; edit
             </p>
           </div>
           {editable && (
-            <form action={setAccountActive.bind(null, a.id, !a.is_active)}>
-              <button className="text-sm text-muted underline">{a.is_active ? "השבתה" : "הפעלה"}</button>
-            </form>
+            <div className="flex shrink-0 items-center gap-3">
+              {a.is_active && (
+                <Link href={`/import?account=${a.id}`} className="text-sm font-semibold text-accent">
+                  ייבוא קובץ
+                </Link>
+              )}
+              <form action={setAccountActive.bind(null, a.id, !a.is_active)}>
+                <button className="text-sm text-muted underline">{a.is_active ? "השבתה" : "הפעלה"}</button>
+              </form>
+            </div>
           )}
         </li>
       ))}

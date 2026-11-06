@@ -106,9 +106,12 @@ export default async function TransactionsPage({
           </>
         )}
         {/* In the header row rather than a floating button, so it never covers an amount */}
+        <Link href="/import" className="ms-auto rounded-full border border-accent px-3 py-1.5 font-semibold text-accent">
+          ייבוא
+        </Link>
         <Link
           href="/transactions/new"
-          className="ms-auto rounded-full bg-accent px-4 py-1.5 font-semibold text-accent-foreground"
+          className="rounded-full bg-accent px-4 py-1.5 font-semibold text-accent-foreground"
         >
           + הוספה
         </Link>
