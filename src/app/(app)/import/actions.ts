@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getHousehold } from "@/lib/household";
-import { classifyKind, fingerprints, mapCardCategory } from "@/lib/import/classify";
+import { classifyKind, fingerprints, mapBankDescription, mapCardCategory } from "@/lib/import/classify";
 import { normalizeMerchant } from "@/lib/import/normalize";
 import type { ParsedRow } from "@/lib/import/parse";
 import type { Account, Category, Tag } from "@/lib/types";
@@ -71,7 +71,8 @@ export async function importFile(accountId: string, fileName: string, rows: Pars
         category_id = rule.category_id;
         tag = (rule.tag as Tag | null) ?? null;
       } else {
-        const mapped = catByName.get(mapCardCategory(r.cardCategory) ?? "");
+        const name = account.type === "bank" ? mapBankDescription(r.merchant) : mapCardCategory(r.cardCategory);
+        const mapped = catByName.get(name ?? "");
         if (mapped) {
           category_id = mapped.id;
           tag = parentTag(mapped);

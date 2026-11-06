@@ -49,7 +49,8 @@ type Field =
 const SYNONYMS: [Field, string[]][] = [
   ["processedDate", ["תאריך חיוב", "מועד חיוב"]],
   ["date", ["תאריך עסקה", "תאריך רכישה", "תאריך העסקה", "תאריך"]],
-  ["merchant", ["שם בית העסק", "שם בית עסק", "בית העסק", "בית עסק", "תיאור התנועה", "תיאור", "פרטים", "הפעולה"]],
+  // "סוג תנועה" is Leumi's name for the description column
+  ["merchant", ["שם בית העסק", "שם בית עסק", "בית העסק", "בית עסק", "תיאור התנועה", "תיאור", "סוג תנועה", "פרטים", "הפעולה"]],
   ["charge", ["סכום חיוב", "סכום החיוב", "סכום לחיוב"]],
   ["originalAmount", ["סכום עסקה מקורי", "סכום מקורי", "סכום העסקה", "סכום עסקה"]],
   ["originalCurrency", ["מטבע עסקה מקורי", "מטבע מקור", "מטבע עסקה"]],
@@ -161,6 +162,20 @@ export function parseInstallment(...texts: Cell[]): { number: number; total: num
 
 const SUMMARY_ROW = /סה״כ|סה"כ|סך הכל|יתרה לסוף|total/i;
 
+/**
+ * Tidy a merchant name for display (the fingerprint uses normalizeMerchant separately):
+ *  * drop invisible direction marks that PDF / HTML exports leave in Hebrew text
+ *  * collapse runs of spaces ("ANTHROPIC              ANTHROPIC.COM US")
+ *  * repair brackets that the export wrote mirrored: "שייק בקטר )שמואל חגג(" → "(שמואל חגג)"
+ */
+export function cleanMerchant(raw: string): string {
+  return raw
+    .replace(/[‎‏‪-‮⁦-⁩]/g, "")
+    .replace(/\)([^()]*)\(/g, "($1)")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // ---------- main ----------
 
 export function parseExport(sheets: SheetRows[], accountType: "bank" | "credit_card"): ParseResult {
@@ -190,7 +205,7 @@ export function parseExport(sheets: SheetRows[], accountType: "bank" | "credit_c
       if (!row || row.every((x) => x === null || x === undefined || String(x).trim() === "")) continue;
 
       const date = parseDate(row[c.date!]);
-      const merchant = String(row[c.merchant!] ?? "").trim();
+      const merchant = cleanMerchant(String(row[c.merchant!] ?? ""));
       if (!date || !merchant || SUMMARY_ROW.test(merchant) || SUMMARY_ROW.test(String(row[0] ?? ""))) {
         skipped++;
         continue;

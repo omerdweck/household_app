@@ -1,24 +1,48 @@
 import { describe, expect, it } from "vitest";
 import * as XLSX from "xlsx";
-import { classifyKind, fingerprints, mapCardCategory } from "./classify";
+import { classifyKind, fingerprints, mapBankDescription, mapCardCategory } from "./classify";
 import { normalizeMerchant } from "./normalize";
-import { detectHeader, parseDate, parseExport, parseInstallment, parseMoney, type Cell } from "./parse";
+import { cleanMerchant, detectHeader, parseDate, parseExport, parseInstallment, parseMoney, type Cell } from "./parse";
 import { readWorkbook } from "./read";
 
-// Simulated exports, built from the public layouts of Max and Israeli bank
-// statements. Real sample files will be added as fixtures when available.
+// Fixtures copy the EXACT layout of real exports (Max 2026-10 and a Leumi
+// statement): same title rows, 16 Max columns, total rows. Values are made up.
+const MAX_HEADER = ["תאריך עסקה", "שם בית העסק", "קטגוריה", "4 ספרות אחרונות של כרטיס האשראי", "סוג עסקה", "סכום חיוב", "מטבע חיוב", "סכום עסקה מקורי", "מטבע עסקה מקורי", "תאריך חיוב", "הערות", "תיוגים", "מועדון הנחות", "מפתח דיסקונט", "אופן ביצוע ההעסקה", 'שער המרה ממטבע מקור/התחשבנות לש"ח'];
+const maxTitle = (): Cell[][] => [["כל המשתמשים (1)", null, ""], ["כל הכרטיסים (2)", null, ""], ["10/2026", null, ""]];
+const maxRow = (date: string, merchant: string, cat: string, card: string, type: string, charge: number, orig = charge, cur = "₪", chargeDate = "02-12-2026", notes = "", how = ""): Cell[] =>
+  [date, merchant, cat, card, type, charge, "₪", orig, cur, chargeDate, notes, "", "", "", how, cur === "₪" ? "" : " 3.0420"];
+
 const MAX_LIKE: Cell[][] = [
-  ["פירוט עסקאות לכרטיס מסטרקארד 4821"],
-  ["כל המשתמשים (1)"],
-  [],
-  ["תאריך עסקה", "שם בית העסק", "קטגוריה", "4 ספרות אחרונות של כרטיס האשראי", "סוג עסקה", "סכום חיוב", "מטבע חיוב", "סכום עסקה מקורי", "מטבע עסקה מקורי", "תאריך חיוב", "הערות"],
-  ["03-11-2026", "שופרסל דיל רמת גן", "מזון וצריכה", "4821", "רגילה", 412.6, "₪", 412.6, "₪", "10-12-2026", ""],
-  ["03-11-2026", "קפה לנדוור", "מסעדות, קפה וברים", "4821", "רגילה", 18, "₪", 18, "₪", "10-12-2026", ""],
-  ["03-11-2026", "קפה לנדוור", "מסעדות, קפה וברים", "4821", "רגילה", 18, "₪", 18, "₪", "10-12-2026", ""],
-  ["01-11-2026", "איקאה", "ריהוט ובית", "4821", "תשלומים", 300, "₪", 900, "₪", "10-12-2026", "תשלום 1 מתוך 3"],
-  ["28-10-2026", "AMAZON MKTPLACE", "שונות", "4821", "רגילה", 89.35, "₪", 24.5, "$", "10-12-2026", ""],
-  ["30-10-2026", "זארה", "אופנה", "4821", "זיכוי", -149.9, "₪", -149.9, "₪", "10-12-2026", ""],
-  ["", "סה\"כ", "", "", "", 688.05, "", "", "", "", ""],
+  ...maxTitle(),
+  MAX_HEADER,
+  maxRow("03-11-2026", "שופרסל דיל רמת גן", "מזון וצריכה", "1111", "רגילה", 412.6),
+  maxRow("03-11-2026", "קפה לנדוור", "מסעדות, קפה וברים", "1111", "רגילה", 18),
+  maxRow("03-11-2026", "קפה לנדוור", "מסעדות, קפה וברים", "1111", "רגילה", 18),
+  maxRow("01-11-2026", "איקאה", "ריהוט ובית", "1111", "תשלומים", 300, 900, "₪", "02-12-2026", "תשלום 1 מתוך 3"),
+  maxRow("28-10-2026", "AMAZON MKTPLACE        AMAZON.COM US", "שונות", "1111", "רגילה", 89.35, 24.5, "$", "02-12-2026", "", "אינטרנט"),
+  maxRow("30-10-2026", "זארה", "אופנה", "1111", "זיכוי", -149.9),
+  ["סך הכל", null, null],
+  ["688.05₪", null, null],
+];
+
+// Max splits one export into three sheets; the third is debit-card purchases
+// that ALSO appear one by one on the bank statement as "לאומי דביט".
+const MAX_SHEETS = [
+  { name: "עסקאות במועד החיוב", rows: MAX_LIKE },
+  {
+    name: 'עסקאות חו"ל ומט"ח',
+    rows: [...maxTitle(), MAX_HEADER,
+      maxRow("01-09-2026", "SOME SAAS              SAAS.COM US", "חשמל ומחשבים", "2222", "חיוב עסקות מיידי", 31.33, 10, "$", "03-09-2026", "", "אינטרנט"),
+      ["סך הכל"], ["31.33₪"]] as Cell[][],
+  },
+  {
+    name: "עסקאות בחיוב מיידי",
+    rows: [...maxTitle(), MAX_HEADER,
+      maxRow("01-09-2026", "WOLT", "מסעדות, קפה וברים", "2222", "חיוב עסקות מיידי", 67.2, 67.2, "₪", "03-09-2026", "", "טלפוני"),
+      maxRow("01-09-2026", "שייק בקטר )שמואל חגג(", "מסעדות, קפה וברים", "2222", "חיוב עסקות מיידי", 18, 18, "₪", "04-09-2026"),
+      maxRow("12-09-2026", "המוסד לביטוח לאומי - חשבו", "עירייה וממשלה", "2222", "רגילה", 171, 171, "₪", "02-10-2026", "הוראת קבע"),
+      ["סך הכל"], ["256.20₪"]] as Cell[][],
+  },
 ];
 
 const BANK_DEBIT_CREDIT: Cell[][] = [
@@ -28,6 +52,18 @@ const BANK_DEBIT_CREDIT: Cell[][] = [
   ["02/11/2026", "02/11/2026", "מקס איט פיננסים", "99", "3,400.00", "", "4,600.00"],
   ["05/11/2026", "05/11/2026", "משכורת", "77", "", "12,000.00", "16,600.00"],
   ["06/11/2026", "06/11/2026", "מקסטוק", "88", "120.00", "", "16,480.00"],
+];
+
+const LEUMI_LIKE: Cell[][] = [
+  ["תאריך", "סוג תנועה", "זכות", "חובה", "יתרה מצטברת"],
+  ["03.11.2026", "מקס איט פיננ-י", "", "₪ 89.12", "₪ 1,000.00"],
+  ["03.11.2026", "לאומי דביט", "", "₪ 109.90", "₪ 1,089.12"],
+  ["02.11.2026", "דמי כרטיס דביט", "", "₪ 7.00", "₪ 1,199.02"],
+  ["01.11.2026", "שיק", "", "₪ 5,200.00", "₪ 1,206.02"],
+  ["01.11.2026", "פרעון הלוואה", "", "₪ 807.80", "₪ 6,406.02"],
+  ["01.11.2026", "העברת משכורת", "₪ 1,212.23", "", "₪ 7,213.82"],
+  ["28.10.2026", "העמדת הלואה", "₪ 40,000.00", "", "₪ 6,001.59"],
+  ["28.10.2026", "הפועלים-ביט", "₪ 200.00", "", "₪ -33,998.41"],
 ];
 
 const BANK_SIGNED: Cell[][] = [
@@ -72,9 +108,9 @@ describe("Max-like credit card export", () => {
     expect(detectHeader(MAX_LIKE)?.index).toBe(3);
   });
 
-  it("keeps 6 purchases and skips the total row", () => {
+  it("keeps 6 purchases and skips both total rows", () => {
     expect(res.rows).toHaveLength(6);
-    expect(res.skipped).toBe(1);
+    expect(res.skipped).toBe(2); // "סך הכל" and the "688.05₪" line under it
   });
 
   it("uses the charged ILS amount and keeps the foreign original", () => {
@@ -82,7 +118,7 @@ describe("Max-like credit card export", () => {
     expect(amazon.amount).toBe(89.35);
     expect(amazon.originalAmount).toBe(24.5);
     expect(amazon.originalCurrency).toBe("USD");
-    expect(amazon.processedDate).toBe("2026-12-10");
+    expect(amazon.processedDate).toBe("2026-12-02");
   });
 
   it("charges installments by the monthly payment", () => {
@@ -202,5 +238,71 @@ describe("reading real file formats", () => {
     const res = parseExport([{ name: "x", rows: [["שלום"], ["עולם"]] }], "bank");
     expect(res.rows).toHaveLength(0);
     expect(res.warnings[0]).toContain("לא נמצאה שורת כותרות");
+  });
+});
+
+describe("real Max layout: three sheets", () => {
+  const res = parseExport(MAX_SHEETS, "credit_card");
+
+  it("reads every sheet and matches each sheet's own total row", () => {
+    expect(res.sheetsUsed).toHaveLength(3);
+    for (const sheet of MAX_SHEETS) {
+      const rows = parseExport([sheet], "credit_card").rows;
+      const total = Number(String(sheet.rows.at(-1)?.[0]).replace("₪", ""));
+      expect(Math.round(rows.reduce((s, r) => s + r.amount, 0) * 100) / 100).toBe(total);
+    }
+  });
+
+  it("cleans merchant names for display", () => {
+    const names = res.rows.map((r) => r.merchant);
+    expect(names).toContain("SOME SAAS SAAS.COM US");
+    expect(names).toContain("שייק בקטר (שמואל חגג)");
+  });
+
+  it("maps the real Max category names", () => {
+    expect(mapCardCategory("עירייה וממשלה")).toBe("חשבונות");
+    expect(mapCardCategory("קוסמטיקה וטיפוח")).toBe("טיפוח");
+    expect(mapCardCategory("ביטוח")).toBe("ביטוח");
+    expect(mapCardCategory("העברת כספים")).toBe("העברות");
+    expect(mapCardCategory("דלק, חשמל וגז")).toBe("דלק");
+    expect(mapCardCategory("מסעדות, קפה וברים")).toBe("אוכל בחוץ");
+    expect(mapCardCategory("מוצרי m_a_x")).toBeNull();
+  });
+});
+
+describe("real Leumi statement lines", () => {
+  const res = parseExport([{ name: "דף חשבון", rows: LEUMI_LIKE }], "bank");
+  const kind = (m: string) => classifyKind(res.rows.find((r) => r.merchant === m)!, "bank");
+
+  it("reads '₪ 1,234.56' amounts in debit / credit columns", () => {
+    expect(res.rows).toHaveLength(8);
+    expect(res.rows.find((r) => r.merchant === "שיק")!.amount).toBe(5200);
+  });
+
+  it("does not count Max and debit-card lines again (they are itemized in the Max file)", () => {
+    expect(kind("מקס איט פיננ-י")).toBe("card_bill");
+    expect(kind("לאומי דביט")).toBe("card_bill");
+  });
+
+  it("keeps the debit-card FEE as a real expense", () => {
+    expect(kind("דמי כרטיס דביט")).toBe("expense");
+  });
+
+  it("does not treat a loan being paid out as income", () => {
+    expect(kind("העמדת הלואה")).toBe("internal_transfer");
+    expect(kind("העברת משכורת")).toBe("income");
+    expect(kind("פרעון הלוואה")).toBe("expense");
+  });
+
+  it("suggests categories from bank descriptions", () => {
+    expect(mapBankDescription("פרעון הלוואה")).toBe("הלוואות");
+    expect(mapBankDescription("דמי כרטיס דביט")).toBe("עמלות ובנק");
+    expect(mapBankDescription("שיק")).toBeNull();
+  });
+});
+
+describe("cleanMerchant", () => {
+  it("strips invisible direction marks from PDF / HTML text", () => {
+    expect(cleanMerchant("‫מקס איט פיננ‪-‬י‬")).toBe("מקס איט פיננ-י");
   });
 });

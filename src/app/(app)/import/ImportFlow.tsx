@@ -149,7 +149,11 @@ export function ImportFlow({ accounts, initialAccountId }: { accounts: Account[]
                 <li>
                   סה״כ הוצאות: <span dir="ltr">{formatILS(preview.spent)}</span>
                 </li>
-                {preview.cardBills > 0 && <li className="text-muted">{preview.cardBills} חיובי כרטיס (לא ייספרו)</li>}
+                {preview.cardBills > 0 && (
+                  <li className="text-muted">
+                    {preview.cardBills} חיובי כרטיס אשראי / דביט לא ייספרו כאן — הם מפורטים בקובץ של מקס. כדאי לייבא גם אותו.
+                  </li>
+                )}
                 {preview.income > 0 && <li className="text-muted">{preview.income} זיכויים / הכנסות</li>}
                 {preview.skipped > 0 && <li className="text-muted">{preview.skipped} שורות סיכום או ריקות דולגו</li>}
               </ul>
