@@ -9,6 +9,11 @@
   --accent: #0f766e;
   --accent-foreground: #ffffff;
   --danger: #b42318;
+  /* Chart series: one color per household member (fixed order, never per viewer).
+     Validated with the dataviz palette checker on --surface (light) and dark below. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --grid: #e3e9e6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,6 +26,9 @@
     --accent: #2dd4bf;
     --accent-foreground: #04201c;
     --danger: #f97066;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --grid: #22302c;
   }
 }
 
@@ -33,6 +41,9 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-danger: var(--danger);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-grid: var(--grid);
   /* System fonts render Hebrew well on iOS, Android and desktop, with no download */
   --font-sans: system-ui, -apple-system, "Segoe UI", "Rubik", "Arial Hebrew", Arial, sans-serif;
 }

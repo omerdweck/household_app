@@ -3,6 +3,7 @@ import { getHousehold } from "@/lib/household";
 
 const MODULES = [
   { title: "הוצאות", href: "/transactions", note: "רשימה, הוספה וחלוקה" },
+  { title: "סיכום", href: "/summary", note: "מי הוציא כמה ועל מה" },
   { title: "ייבוא קובץ", href: "/import", note: "פירוט עסקאות מהבנק / מקס" },
   { title: "החשבונות שלי", href: "/accounts", note: "בנקים וכרטיסי אשראי" },
   { title: "תקציב חודשי", note: "בקרוב · שלב 2" },

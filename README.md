@@ -18,6 +18,8 @@ src/
       page.tsx             דף הבית
       accounts/            "החשבונות שלי": בנקים וכרטיסי אשראי
       transactions/        הוצאות: רשימה חודשית, הוספה, עריכה וחלוקה
+      import/              ייבוא קבצי Excel מהבנק / מקס, עם ביטול ייבוא
+      summary/             סיכום חודשי: מי נושא במה, דירה מול אישי, קטגוריות, מגמה
     login/                 התחברות עם Google
     auth/callback/         Google מחזיר לכאן → יצירת session
     auth/signout/          יציאה (POST בלבד)
@@ -25,6 +27,9 @@ src/
     manifest.ts            PWA manifest
   lib/supabase/            לקוחות Supabase: דפדפן, שרת, middleware
   lib/money.ts             חישובי חלוקה באגורות שלמות (עם בדיקות)
+  lib/import/              קריאת קבצי ייצוא, סיווג, טביעות אצבע (עם בדיקות)
+  lib/stats.ts             חישובי הדשבורד (עם בדיקות)
+  components/charts/       גרפים (SVG/HTML, בלי ספרייה חיצונית)
   lib/household.ts         המשתמש המחובר ובן/בת הזוג
   middleware.ts            רענון session + הפניה ל-/login
 supabase/

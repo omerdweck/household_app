@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const ITEMS = [
   { href: "/", label: "בית", icon: HomeIcon },
   { href: "/transactions", label: "הוצאות", icon: ListIcon },
+  { href: "/summary", label: "סיכום", icon: ChartIcon },
   { href: "/accounts", label: "חשבונות", icon: CardIcon },
 ];
 
@@ -51,6 +52,14 @@ function ListIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
       <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ChartIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M4 20V10M10 20V4M16 20v-7M21 20H3" strokeLinecap="round" />
     </svg>
   );
 }
