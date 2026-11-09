@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/", label: "בית", icon: HomeIcon },
   { href: "/transactions", label: "הוצאות", icon: ListIcon },
   { href: "/summary", label: "סיכום", icon: ChartIcon },
+  { href: "/budget", label: "תקציב", icon: TargetIcon },
   { href: "/accounts", label: "חשבונות", icon: CardIcon },
 ];
 
@@ -25,7 +26,7 @@ export function BottomNav() {
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`flex flex-col items-center gap-0.5 px-5 py-2 text-xs ${
+                className={`flex flex-col items-center gap-0.5 px-3 py-2 text-xs ${
                   active ? "text-accent" : "text-muted"
                 }`}
               >
@@ -60,6 +61,16 @@ function ChartIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
       <path d="M4 20V10M10 20V4M16 20v-7M21 20H3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TargetIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="0.8" fill="currentColor" />
     </svg>
   );
 }

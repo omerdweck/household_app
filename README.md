@@ -20,6 +20,7 @@ src/
       transactions/        הוצאות: רשימה חודשית, הוספה, עריכה וחלוקה
       import/              ייבוא קבצי Excel מהבנק / מקס, עם ביטול ייבוא
       summary/             סיכום חודשי: מי נושא במה, דירה מול אישי, קטגוריות, מגמה
+      budget/              תקציב חודשי: קופה משותפת, אישי, תקרות לקטגוריה
     login/                 התחברות עם Google
     auth/callback/         Google מחזיר לכאן → יצירת session
     auth/signout/          יציאה (POST בלבד)
@@ -29,6 +30,7 @@ src/
   lib/money.ts             חישובי חלוקה באגורות שלמות (עם בדיקות)
   lib/import/              קריאת קבצי ייצוא, סיווג, טביעות אצבע (עם בדיקות)
   lib/stats.ts             חישובי הדשבורד (עם בדיקות)
+  lib/budget.ts            תקציב מול ביצוע, רמות התראה (עם בדיקות)
   components/charts/       גרפים (SVG/HTML, בלי ספרייה חיצונית)
   lib/household.ts         המשתמש המחובר ובן/בת הזוג
   middleware.ts            רענון session + הפניה ל-/login

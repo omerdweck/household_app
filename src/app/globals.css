@@ -14,6 +14,10 @@
   --series-1: #2a78d6;
   --series-2: #eb6834;
   --grid: #e3e9e6;
+  /* Status colors are reserved for state (budget level) and always come with an icon + word. */
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-critical: #d03b3b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,23 +48,29 @@
   --color-series-1: var(--series-1);
   --color-series-2: var(--series-2);
   --color-grid: var(--grid);
+  --color-status-good: var(--status-good);
+  --color-status-warning: var(--status-warning);
+  --color-status-critical: var(--status-critical);
   /* System fonts render Hebrew well on iOS, Android and desktop, with no download */
   --font-sans: system-ui, -apple-system, "Segoe UI", "Rubik", "Arial Hebrew", Arial, sans-serif;
 }
 
-/* Form fields. 16px text stops iOS Safari from zooming in on focus. */
-.input {
-  width: 100%;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border);
-  background: var(--background);
-  color: var(--foreground);
-  padding: 0.625rem 0.75rem;
-  font-size: 16px;
-}
-.input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+/* Form fields. 16px text stops iOS Safari from zooming in on focus.
+   In the components layer so utility classes (w-28, text-left…) can override it. */
+@layer components {
+  .input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
+    padding: 0.625rem 0.75rem;
+    font-size: 16px;
+  }
+  .input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
 }
 
 body {
